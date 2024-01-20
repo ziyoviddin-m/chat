@@ -1,0 +1,44 @@
+{% extends 'chat/base.html' %}
+
+{% block content %}
+
+<br>
+<br>
+<br>
+<br>
+<div class="d-flex flex-wrap">
+  {% for chat in chats %}
+
+  {% if request.user == chat.user1 %}
+    <div class="card mb-4 rounded-1 shadow-sm mx-2">
+        <div class="card-header py-3">
+          <h4 class="my-0 fw-normal">@{{ chat.user1 }}</h4>
+        </div>
+      <div class="card-body">
+        <ul class="list-unstyled mt-3 mb-4">
+          <li>Ваш чат с @{{ chat.user2 }}</li>
+        </ul>
+        <a href="{% url 'chat' chat.id %}"><button type="button" class="w-100 btn btn-lg btn-primary">Открыть Чат</button></a>
+      </div>
+    </div>
+
+    {% else %}
+
+    <div class="card mb-4 rounded-1 shadow-sm mx-2">
+      <div class="card-header py-3">
+        <h4 class="my-0 fw-normal">@{{ chat.user2 }}</h4>
+      </div>
+    <div class="card-body">
+      <ul class="list-unstyled mt-3 mb-4">
+        <li>Ваш чат с @{{ chat.user1 }}</li>
+      </ul>
+      <a href="{% url 'chat' chat.id %}"><button type="button" class="w-100 btn btn-lg btn-primary">Открыть Чат</button></a>
+    </div>
+  </div>
+
+  {% endif %}
+  {% endfor %}
+</div>
+
+    
+{% endblock %}

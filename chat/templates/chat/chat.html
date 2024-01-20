@@ -1,0 +1,124 @@
+{% extends 'chat/base.html' %}
+
+{% block content %}
+{% if request.user == chat.user1 or request.user == chat.user2 %}
+
+<div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
+  <div class="list-group">
+    <a href="" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
+      <div class="d-flex flex-column gap-2 w-100 justify-content-between" id="chat-messages">
+        {% for message in messages %}
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="mb-0 opacity-75">@{{ message.sender }}: {{ message.content }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </a>
+  </div>
+</div>
+
+
+
+  <form class="card p-2">
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="Your message..." id="chat-message-input">
+      <button type="submit" class="btn btn-secondary" id="chat-message-submit">Submit</button>
+    </div>
+  </form>
+  {% else %}
+
+  <div class="text-center">
+    <h1>404 Not Found</h1>
+    <p>The page you are looking for does not exist.</p>
+  </div>
+  {% endif %}
+{% endblock %}
+
+
+{% block scripts %}
+
+{{ chat.id|json_script:"json-chatid" }}
+{{ request.user.username|json_script:"json-username" }}
+{{ chat.user1.id|json_script:"json-user1id" }}
+{{ chat.user2.id|json_script:"json-user2id" }}
+
+<script>
+
+    const chatId = JSON.parse(document.getElementById('json-chatid').textContent);
+    const username = JSON.parse(document.getElementById('json-username').textContent);
+    const user1Id = JSON.parse(document.getElementById('json-user1id').textContent);
+    const user2Id = JSON.parse(document.getElementById('json-user2id').textContent);
+    
+    const chatSocket = new WebSocket(
+          'ws://'
+          + window.location.host
+          + '/ws/'
+          + chatId
+          + '/'
+          + user1Id
+          + '/'
+          + user2Id
+          + '/'
+    );
+
+    chatSocket.onmessage = function(e) {
+      console.log('onmessage')
+
+      const data = JSON.parse(e.data);
+
+      if (data.message) {
+
+          let html = '<div class="d-flex gap-2 w-100 justify-content-between">'
+            html += '<div>';
+            html += '<p class="mb-0 opacity-75">@' + data.username + ': ' + data.message + '</p>';
+            html += '</div>'
+          document.querySelector('#chat-messages').innerHTML += html;
+          
+
+          scrollToBottom();
+      } else {
+          alert('The message was empty!')
+      }
+    }
+
+    chatSocket.onclose = function(e) {
+      console.log('onclose')
+
+    }
+    
+    //
+
+    document.querySelector('#chat-message-submit').onclick = function(e) {
+      e.preventDefault();
+
+      const messageInputDom = document.querySelector('#chat-message-input');
+      const message = messageInputDom.value;
+
+      chatSocket.send(JSON.stringify({
+          'message': message,
+          'username': username,
+          'chatId': chatId,
+          'user1Id': user1Id,
+          'user2Id': user2Id
+      }));
+
+      messageInputDom.value = '';
+
+      return false;
+    } 
+
+    //
+
+    function scrollToBottom() {
+      const objDiv = document.querySelector('#chat-messages');
+      objDiv.scrollTop = objDiv.scrollHeight;
+    }
+
+    scrollToBottom();
+
+
+</script>
+
+{% endblock %}
